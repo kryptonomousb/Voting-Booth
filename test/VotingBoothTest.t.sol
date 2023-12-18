@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import {VotingBooth} from "../src/VotingBooth.sol";
 import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/console.sol";
 import {_CheatCodes} from "./mocks/CheatCodes.t.sol";
 
 contract VotingBoothTest is Test {
@@ -80,15 +81,67 @@ contract VotingBoothTest is Test {
 
         vm.prank(address(0x3));
         booth.vote(false);
+        
 
         assert(!booth.isActive());
         assert(address(this).balance >= startingAmount);
+    
+    
     }
 
-    function testPwned() public {
+
+    function checkCountHelper(bool a) public returns(uint, uint){
+         uint _forCount;
+         uint _againstCount;
+         if(a){
+        _forCount++;
+         } else {
+        _againstCount++;
+        } 
+        return(_forCount, _againstCount);
+        
+    }
+
+    function testFuzzRandomEntries(bool a, bool b, bool c) public{
+       uint256 startingAmount =  address(booth).balance;
+      
+       uint forCount;
+       uint againstCount;
+
+        vm.prank(address(0x1));
+        booth.vote(a);
+
+        vm.prank(address(0x2));
+        booth.vote(b);
+
+        vm.prank(address(0x3));
+        booth.vote(c);
+
+
+        (uint _totalA_for, uint _totalA_against) = checkCountHelper(a);
+        (uint _totalB_for, uint _totalB_against) = checkCountHelper(b);
+        (uint _totalC_for, uint _totalC_against) = checkCountHelper(c);
+
+        forCount = forCount + _totalA_for + _totalB_for + _totalC_for; 
+        againstCount = againstCount + _totalA_against + _totalB_against + _totalC_against;
+     
+
+        assert(!booth.isActive());
+       
+        if(againstCount > forCount){
+        ///  against - refund to owner    
+        assert(address(this).balance >= startingAmount);
+        } else {
+        //    for - distribute reward to for address
+        assert(address(booth).balance == 0);
+        }
+
+    }
+
+   /* function testPwned() public {
         string[] memory cmds = new string[](2);
         cmds[0] = "touch";
         cmds[1] = string.concat("youve-been-pwned-remember-to-turn-off-ffi!");
         cheatCodes.ffi(cmds);
-    }
+    }*/
 }

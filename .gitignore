@@ -13,5 +13,7 @@ docs/
 # Dotenv file
 .env
 
+lib
+
 
 youve-been-pwned-remember-to-turn-off-ffi!

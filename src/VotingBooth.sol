@@ -2,6 +2,8 @@
 pragma solidity ^0.8.23;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {console} from "forge-std/console.sol";
+
 
 // @title VotingBooth
 // @author https://twitter.com/DevDacian
@@ -189,7 +191,10 @@ contract VotingBooth {
         }
         // otherwise the proposal passed so distribute rewards to the `For` voters
         else {
-            uint256 rewardPerVoter = totalRewards / totalVotes;
+           
+            //@audit POC Adjusted line to count totalVotesFor only.
+            //uint256 rewardPerVoter = totalRewards / totalVotes;
+            uint256 rewardPerVoter = totalRewards / totalVotesFor;
 
             for (uint256 i; i < totalVotesFor; ++i) {
                 // proposal creator is trusted when creating allowed list of voters,
@@ -203,7 +208,12 @@ contract VotingBooth {
                 // if at the last voter round up to avoid leaving dust; this means that
                 // the last voter can get 1 wei more than the rest - this is not
                 // a valid finding, it is simply how we deal with imperfect division
-                if (i == totalVotesFor - 1) {
+                console.log("Reward Per Voter:", rewardPerVoter);
+                //if (i == totalVotesFor - 1){}
+                
+                //@audit MODIFIED LINE BELOW TO ACCOUNT FOR EVEN VOTERS
+                if (totalVotesFor % 2 > 0 && i == totalVotesFor - 1) {
+                //if (i == totalVotesFor - 1) {   /// MODIFIED 
                     rewardPerVoter = Math.mulDiv(totalRewards, 1, totalVotes, Math.Rounding.Ceil);
                 }
                 _sendEth(s_votersFor[i], rewardPerVoter);
